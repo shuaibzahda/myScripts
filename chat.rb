@@ -41,7 +41,7 @@ class StdClass
 		
 		#creating response entry
 		# 1. Create a string of the form "username:realm:password". Call this string X.
-		x = "shuaibzahda:" + response["realm"].gsub("\"", '') + ":hi.man.za."
+		x = "mylogin:" + response["realm"].gsub("\"", '') + ":mysecret"
 		#2. Compute the 16 octet MD5 hash of X. Call the result Y.
 		y = Digest::MD5.digest(x)
 		#3. Create a string of the form "Y:nonce:cnonce". Call this string A1.
