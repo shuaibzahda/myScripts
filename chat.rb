@@ -191,10 +191,8 @@ string sig An MD5 hash of the current request and your secret key.
 
 	print "Username: "
 	username = gets
-	#username = "shuaibzahda"
 	print "password: "
 	password = gets
-	#password = "hi.man.za.1985"
 	
 	username.gsub!("\n","")
 	password.gsub!("\n","")
@@ -263,11 +261,21 @@ string sig An MD5 hash of the current request and your secret key.
 	ss.write(session)
 	puts ss.recv(1000)
 	
+	presence = "<presence><show>chat</show></presence>"
+	ss.write(presence)
+	msg = "<message to='u21312807@chat.facebook.com' from='#{jid[0]}/#{jid[1]}' type='chat'><body>allora?! 60 minuti</body></message>"
+	ss.write(msg)
+	while line = ss.recv(1000)
+		puts line
+		
+	end
+
+=begin
 	#getting the user list called roster
 	roster = "<iq from='#{jid[0]}/#{jid[1]}' type='get' id='roster_1'><query xmlns='jabber:iq:roster'/></iq>"
 	puts "Roster: " + roster
 	ss.write(roster)
-	
+	puts "Receiving user list"
 	#receive the user list and print them in a formated way
 	userList = ""
 	while line = ss.recv(1000)   # Read lines from the socket
@@ -283,13 +291,7 @@ string sig An MD5 hash of the current request and your secret key.
 	puts "All User in Formated way"
 	createUserList(userList)
 	puts @@allUsers.inspect
-	
-	presence = "<presence><show>chat</show></presence>"
-	ss.write(presence)
-	while line = ss.recv(1000)
-		puts line
-	end
-	
+=end
 	ss.close
 	end
 end
