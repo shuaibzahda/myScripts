@@ -34,8 +34,8 @@ class StdClass
 	
 	def startMe
 		startedAt = Time.now
-#		filename = "firesample.xml"
-		filename = "firebird.xml"
+		filename = "firebird_continue.xml"
+#		filename = "firebird.xml"
 		bugs = []
 		modified = []
 		
@@ -56,6 +56,7 @@ class StdClass
 				#get the name of the developer
 				@@developer = sub_element.text if sub_element.name == "author"
 				#record all executable files
+=begin
 				if sub_element.name == "paths"
 					sub_element.each_element do |path|
 						modified << path.text.to_s if extensions.match(path.text.to_s) 
@@ -63,12 +64,13 @@ class StdClass
 					@@files = {:modified => modified}
 					modified = []
 				end				
+=end
 			end 
 
 			#dump information to database
 			programmer = Programmer.find_by_name(@@developer.to_s)
 			if programmer 
-				programmer.increment('commits', 1)
+				programmer.increment('total_commits', 1)
 				programmer.last_at = @@date.to_s
 				#increase lines of code added and delted
 				programmer.save
@@ -77,7 +79,7 @@ class StdClass
 					:last_at => @@date.to_s)
 			end
 			commit =  programmer.commits.create(:revision => @@revision.to_i, :date => @@date.to_s)
-
+=begin
 			#get number of deleted and added files
 			@@files[:modified].each do |file| 
 				file.slice!(0)  #this will delete the first char "/" from the path 
@@ -95,7 +97,26 @@ class StdClass
 					programmer.save
 				end
 			end
+=end
 
+			#find the number of addition and deletion per file
+			filesCount = getDiff(@@revision)			
+			filesCount.each do |file|
+			#dump to database
+				puts file["filename"].inspect
+				puts "Added: " + file["added"].to_s
+				puts "Deleted: " + file["deleted"].to_s	
+				
+				modification = Modification.create(:name => file["filename"].gsub("\n","").to_s, :commit_id => commit.id, 
+				:addLOC =>file["added"].to_i, :deletedLOC => file["deleted"].to_i, :started_at => @@date.to_s, :last_at => @@date.to_s)
+				#add the number of delted and added lines to the developers
+				
+				programmer.increment('addedLOC', file["added"].to_i)
+				programmer.increment('deletedLOC', file["deleted"].to_i)
+				programmer.save	
+			end
+			#puts filesCount.inspect
+			
 			#report						
 			bugs << {:revision => @@revision, :date => @@date.to_s, :files => @@files, :developer => @@developer }
 			reset #reset all variables
@@ -150,7 +171,7 @@ class StdClass
 			labels[size * i] = (2005 + i).to_s
 		end
 		puts labels.inspect
-		g.labels = labels#{0 => '2006', 70 => '2007', 140 => '2008', 210 => '2009', 280 => '2010'}
+		g.labels = labels #{0 => '2006', 70 => '2007', 140 => '2008', 210 => '2009', 280 => '2010'}
 		g.write('commits.png')
 	end
 	
@@ -167,6 +188,42 @@ class StdClass
 		[added.size, deleted.size]
 	end
 	
+	def getDiff(revision)
+		prev = revision.to_i - 1
+		puts "svn diff -r r#{prev.to_s}:r#{revision.to_s}"
+		out = `svn diff -r r#{prev.to_s}:r#{revision.to_s} https://firebird.svn.sourceforge.net/svnroot/firebird/ | diffstat -t`
+		output = {}
+		result = []
+		#filename = "out.txt"
+		extensions = /(.cs$|.cpp$|.c$|.java$)/
+
+		#data = File.read(filename)		
+		out.each do |line|
+			if extensions.match(line)
+				values = line.split(",")
+				output["filename"] = values[3].to_s
+				output["added"] = values[0].to_s
+				output["deleted"] = values[1].to_s
+				result << output
+				output = {}
+ 				#puts "File: " +  values[3].to_s
+				#puts "Added: " + values[0].to_s
+				#puts "Deleted: " + values[1].to_s
+			end
+		end
+		result
+	end
+	
+	def deleteEntries
+		commits = Commit.find(:all, :conditions => "revision <= 314")
+		commits.each do |commit|
+			puts commit.revision
+			puts commit.programmer.total_commits.to_s
+			commit.programmer.decrement("total_commits", 1)
+			commit.programmer.save
+			commit.destroy
+		end
+	end
 	
 	def reset
 		@@revision = ""
@@ -180,3 +237,5 @@ x = StdClass.new
 x.startMe
 #x.drawDevelopers
 #x.drawCommits
+#x.getDiff(1)
+#x.deleteEntries
