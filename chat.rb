@@ -6,21 +6,9 @@ require 'digest/md5'
 
 class StdClass
 
-	@@allUsers = {}
+	@@friends = []
 	def initialize
 		
-	end
-	
-	def createUserList(users)
-		#<item jid="u526052968@chat.facebook.com" subscription="both" name="Nasir Dawod Musa"><group>malaysia</group></item>
-		#users = File.open("users.txt")
-		data, others = REXML::Document.new(users), []
-		data.elements.each("iq/query/*") do |ele|
-			@@allUsers[ele.attributes["jid"]] = [ele.attributes["name"], "offline"]
-			puts ele.attributes["jid"] + " " + ele.attributes["name"]
-		end	
-		
-		#puts @@allUsers.inspect
 	end
 	
 	def getJID(text)
@@ -93,114 +81,227 @@ class StdClass
 	end
 	
 	def connection
-	to = "chat.facebook.com"
-	host = "chat.facebook.com"
-	port = 5222
+		to = "chat.facebook.com"
+		host = "chat.facebook.com"
+		port = 5222
 
-	print "Username: "
-	username = gets
-	print "password: "
-	password = gets
-	
-	username.gsub!("\n","")
-	password.gsub!("\n","")
-	
-	puts username.inspect
-	puts password.inspect
-	
-	initiate = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='#{to}' version='1.0'>"	
-	sasl = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='DIGEST-MD5'/>"
-	tls =  "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>"
-	
-	ss = TCPSocket.new(host, port)  	
-	ss.write(initiate)
-
-	puts "step1: "
-	puts ss.recv(650)
-	puts ss.recv(500)
-
-	puts "step2: "
-	ss.write(sasl)
-	challange = ss.recv(1000)
-	puts challange
-
-	decoded = get_challange(challange)
-#	md5Values = getValuesFromDecoded(decoded, "&")
-	md5Values = getValuesFromDecoded(decoded, ",") #md5 mechanism
-	puts md5Values.inspect
-	#response_value = construct_facebook(md5Values)
-	#puts response_value.inspect
-	#encode the response value
-	#response = "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>" + Base64.encode64(response_value) + "</response>"	
-	#puts response
-	response_value = construct_response(md5Values, username, password)
-	puts response_value
-	#step 3 send the response for authentication
-	#encode the response value
-	response = "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>" + Base64.encode64(response_value) + "</response>"	
-	puts response
-	puts "step 3: "
-	ss.write(response)
-	challange = ss.recv(1000)
-	puts challange 
-	decoded = get_challange(challange)
-	puts decoded
-	
-	puts "step 4: "
-	res = "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>"
-	ss.write(res)
-	puts ss.recv(1000)
-
-	puts "step5: "
-	ss.write(initiate)
-	puts ss.recv(1000)
-	puts ss.recv(1000)
-
-	puts "step 6: bind resource"
-	binding = "<iq type='set' id='bind_1'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/></iq>"
-	ss.write(binding)
-	jid = getJID(ss.recv(1000))
-	
-	puts jid.inspect
-	#puts ss.recv(1000)
-	
-	puts "step 7: start session"
-	session = "<iq to='#{to}' type='set' id='sess_1'><session xmlns='urn:ietf:params:xml:ns:xmpp-session'/></iq>"
-	ss.write(session)
-	puts ss.recv(1000)
-	
-	presence = "<presence><show>chat</show></presence>"
-	ss.write(presence)
-	msg = "<message to='u21312807@chat.facebook.com' from='#{jid[0]}/#{jid[1]}' type='chat'><body>allora?! 60 minuti</body></message>"
-	ss.write(msg)
-	while line = ss.recv(1000)
-		puts line
+		print "Username: "
+		username = gets
+		print "password: "
+		password = gets
 		
+		username.gsub!("\n","")
+		password.gsub!("\n","")
+				
+		initiate = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='#{to}' version='1.0'>"	
+		sasl = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='DIGEST-MD5'/>"
+		tls =  "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>"
+		
+		ss = TCPSocket.new(host, port)  	
+		ss.write(initiate)
+
+		puts "step1: "
+		puts ss.recv(650)
+		puts ss.recv(500)
+
+		puts "step2: "
+		ss.write(sasl)
+		challange = ss.recv(1000)
+		puts challange
+
+		decoded = get_challange(challange)
+	#	md5Values = getValuesFromDecoded(decoded, "&")
+		md5Values = getValuesFromDecoded(decoded, ",") #md5 mechanism
+		puts md5Values.inspect
+		response_value = construct_response(md5Values, username, password)
+		puts response_value
+
+		#step 3 send the response for authentication
+		#encode the response value
+		response = "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>" + Base64.encode64(response_value) + "</response>"	
+		puts response
+		puts "step 3: "
+		ss.write(response)
+		challange = ss.recv(1000)
+		puts challange 
+		decoded = get_challange(challange)
+		puts decoded
+		
+		puts "step 4: "
+		res = "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>"
+		ss.write(res)
+		puts ss.recv(1000)
+
+		puts "step5: "
+		ss.write(initiate)
+		
+		while line = ss.recv(1000)   # Read lines from the socket
+			if line.end_with?("</stream:features>")
+				puts line
+				break
+			else
+				puts line 
+			end
+		end	
+		
+		puts "step 6: bind resource"
+		binding = "<iq type='set' id='bind_1'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/></iq>"
+		ss.write(binding)
+		jid = getJID(ss.recv(1000))		
+		puts jid.inspect
+		
+		puts "step 7: start session"
+		session = "<iq to='#{to}' type='set' id='sess_1'><session xmlns='urn:ietf:params:xml:ns:xmpp-session'/></iq>"
+		ss.write(session)
+		puts ss.recv(1000)
+		
+		#getting the user list called roster
+		roster = "<iq from='#{jid[0]}/#{jid[1]}' type='get' id='roster_1'><query xmlns='jabber:iq:roster'/></iq>"
+		puts "Roster: " + roster
+		ss.write(roster)
+		puts "Receiving user list"
+		#receive the user list and print them in a formated way
+		userList = ""
+		while line = ss.recv(1000)   # Read lines from the socket
+			if line.end_with?("</iq>")
+				userList += line
+				break
+			else
+				userList += line 
+			end
+			puts line
+		end
+		
+		createUserList(userList)
+		puts "All Friends list has been created"
+		
+		puts "Step 8: send the status and receive messages and stutuses from people"
+		presence = "<presence><show>chat</show></presence>"
+		ss.write(presence)
+		msg = "<message to='u21312807@chat.facebook.com' from='#{jid[0]}/#{jid[1]}' type='chat'><body>allora?! 60 minuti</body></message>"
+		ss.write(msg)
+		
+		data_chunk = ""
+		while line = ss.recv(1000)
+			#if the tag is not closed </> that means it is not yet completed and we have to wait for the rest of it.
+			#if it is completed then we can process what ever we received
+			
+			if line.end_with?("</presence>") || line.end_with?("</message>") 
+				data_chunk += line
+				XMLProcessor(data_chunk)
+				data_chunk = ""
+				getOnlineFriends
+			else
+				data_chunk += line
+			end
+#			puts data_chunk
+		end
+		ss.close
+	end
+	
+	def XMLProcessor(xml)
+		#xml = File.read("replies.xml")
+		#wrap the xml with <replies> </replies>
+		xml.insert(0, "<replies>")
+		xml.insert(xml.size.to_i, "</replies>")
+		
+		#puts "XML: ----" + xml
+		
+		#then process each xml entry according to its tag i.e presence for status and message for messages		
+		data, others = REXML::Document.new(xml), []
+		data.elements.each("replies/*") do |ele|
+			if ele.name == "presence"
+				process_presence(ele)
+			elsif ele.name == "message"
+				process_message(ele)
+			end
+		end
+	end
+	
+	def process_message(message)
+		friendJID = message.attributes["from"]
+		text = ""
+		if message.attributes["type"] == "chat"
+			message.elements.each do |element|
+				text += element.text unless element.text.nil?
+			end
+			puts [friendJID, text] unless text.empty?
+		end
 	end
 
-=begin
-	#getting the user list called roster
-	roster = "<iq from='#{jid[0]}/#{jid[1]}' type='get' id='roster_1'><query xmlns='jabber:iq:roster'/></iq>"
-	puts "Roster: " + roster
-	ss.write(roster)
-	puts "Receiving user list"
-	#receive the user list and print them in a formated way
-	userList = ""
-	while line = ss.recv(1000)   # Read lines from the socket
-		if line.end_with?("</iq>")
-			userList += line
-			break
-		else
-			userList += line 
+	def process_presence(presence)
+		status = ""
+		friendJID = presence.attributes["from"]
+		#if the type is set - the person is not available
+		if !(presence.attributes["type"].nil?)
+			status = presence.attributes["type"]
+		else #the user would either be available or busy or away
+			presence.elements.each do |element|
+				status = element.text if element.name == "show"
+			end
 		end
-	end	
-	#puts userList
-	#puts "-----"      # And print with platform line terminator
-	puts "All User in Formated way"
-	createUserList(userList)
-	puts @@allUsers.inspect
+		#if the status is not away or unavailable i.e. the friend is online
+		status = "online" if status.empty?
+
+		#update the userList 
+		puts [friendJID, status]
+		updateUserStatus(friendJID, status)
+	end
+	
+	def updateUserStatus(jid, status)
+		@@friends.each do |friend|
+			friend.status = status if friend.jid == jid
+		end
+	end
+	
+	def getOnlineFriends
+		puts "==================="
+		puts "== Online Friends  "
+		puts "==================="
+		
+		@@friends.each do |friend|
+			if friend.status != "offline"
+				puts friend.id.to_s + ". " + friend.name + " - " + friend.status 
+			end
+		end
+	end
+	
+	def createUserList(users)
+		#<item jid="u526052968@chat.facebook.com" subscription="both" name="Nasir Dawod Musa"><group>malaysia</group></item>
+		#users = File.open("users.txt")
+		id = 1
+		data, others = REXML::Document.new(users), []
+		data.elements.each("iq/query/*") do |ele|
+			friend = Friend.new(id, ele.attributes["jid"], ele.attributes["name"], "offline")
+			@@friends << friend
+			id += 1
+		end	
+
+=begin				
+		@@friends.each do |f|
+			puts "----\n" + f.id.to_s
+			puts f.name
+			puts f.jid
+			puts f.messages
+		end
 =end
-	ss.close
+
+	end
+end
+
+
+class Friend
+	attr_accessor :id, :jid, :name, :status, :messages
+	def initialize(id, jid, name, status)
+		@id = id
+		@jid = jid
+		@name = name
+		@status = status
+		@messages = ""
+	end
+	
+	def search_jid
+		
 	end
 end
 
@@ -208,3 +309,4 @@ x = StdClass.new
 x.connection
 #x.createUserList("a")
 #x.getJID("a")
+#x.buildUserList("a")
