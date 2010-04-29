@@ -264,9 +264,7 @@ class Chatting
 				
 		print "Username: "
 		username = gets
-		#username = "shuaibzahda"
 		print "password: "
-		#password = "al_zahidi1985"
 		password = get_password
 		
 		username.gsub!("\n","")
