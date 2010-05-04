@@ -18,7 +18,7 @@ class Notifications
 	end
 	
 	def self.bye
-		puts "Thank you for using Facebook command line chat - Good Bye.\n"
+		"Thank you for using Facebook command line chat - Good Bye.\n"
 	end
 	
 	def self.exit_error
@@ -45,4 +45,3 @@ class Notifications
 		puts "$exit" + tabs + "exit chatting with friend and go back to command line mode"
 	end
 end
-

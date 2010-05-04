@@ -1,4 +1,4 @@
-require "socket"  
+require "socket"
 require "openssl"
 require "base64"
 require 'rexml/document'
@@ -57,7 +57,7 @@ class Chatting
 				when "messages"
 					new_messages
 				when "status"
-					args.to_i == 2 && STATUS.include?(command[1]) ? change_status(command[1]) : Erros.status_error
+					args.to_i == 2 && STATUS.include?(command[1]) ? change_status(command[1]) : Notifications.status_error
 			end
 		else
 			Notifications.wrong_command
@@ -93,10 +93,8 @@ class Chatting
 			chatting_window(id)
 		end
 		puts "Command line mode"
+		#closing the thread
 		update_chat.exit
-		#message = gets
-		#send_data(construct_message(@@myJID, id, message))
-		#append_send_message(id, message)
 	end
 	
 	def chatting_window(id)
