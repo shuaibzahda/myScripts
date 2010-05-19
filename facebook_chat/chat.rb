@@ -311,13 +311,13 @@ class Chatting
 		
 		puts "Please wait ..."
 		while line = receive_data_once
-			print "."
-			if line.include?("</group></item></query></iq>")
+			if line.include?("</group></item></query></iq>") || userList.include?("</group></item></query></iq>")
 				userList += line
 				break
 			else
 				userList += line 
 			end
+			print "."
 		end
 
 		#sometimes the stream of data has more thant the </iq>, so we split it and store the remaining for next steps
@@ -449,7 +449,6 @@ class Chatting
 	def createUserList(users)
 		id = 1
 		data, others = REXML::Document.new(users), []
-		#check the xml order
 		data.elements.each("replies/iq/query/*") do |ele|
 			if ele.attributes["subscription"] == "both"
 				friend = Friend.new(id, ele.attributes["jid"], ele.attributes["name"], "offline")
