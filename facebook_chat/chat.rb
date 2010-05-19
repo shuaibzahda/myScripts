@@ -312,7 +312,7 @@ class Chatting
 		puts "Please wait ..."
 		while line = receive_data_once
 			print "."
-			if line.include?("</iq>")
+			if line.include?("</group></item></query></iq>")
 				userList += line
 				break
 			else
@@ -321,8 +321,9 @@ class Chatting
 		end
 
 		#sometimes the stream of data has more thant the </iq>, so we split it and store the remaining for next steps
-		userXML = userList.split("</iq>")
-		users = userXML[0].insert(userXML[0].size.to_i, "</iq>")
+		userXML = userList.split("</group></item></query></iq>")
+		users = userXML[0].insert(userXML[0].size.to_i, "</group></item></query></iq></replies>")
+		users.insert(0, "<replies>")
 		createUserList(users)		
 		puts "\nFriends list has been retrieved."
 		
@@ -413,17 +414,6 @@ class Chatting
 		message
 	end
 	
-	def read_all_messages
-		puts "All messages"
-		@@friends.each do |friend|
-			unless friend.messages.empty?
-				puts "---------"
-				puts friend.name
-				puts friend.messages 
-			end
-		end
-	end
-	
 	def search_jid(jid)
 		target_friend = ""
 		@@friends.each do |friend|
@@ -459,10 +449,13 @@ class Chatting
 	def createUserList(users)
 		id = 1
 		data, others = REXML::Document.new(users), []
-		data.elements.each("iq/query/*") do |ele|
-			friend = Friend.new(id, ele.attributes["jid"], ele.attributes["name"], "offline")
-			@@friends << friend
-			id += 1
+		#check the xml order
+		data.elements.each("replies/iq/query/*") do |ele|
+			if ele.attributes["subscription"] == "both"
+				friend = Friend.new(id, ele.attributes["jid"], ele.attributes["name"], "offline")
+				@@friends << friend
+				id += 1
+			end
 		end	
 	end
 end
