@@ -14,7 +14,7 @@ class Chatting
 	
 	@@friends = []
 	@@messages = []
-	
+		
 	def command_line
 		puts "Facebook> "
 		while line = gets
@@ -309,9 +309,11 @@ class Chatting
 		roster = "<iq from='#{@@myJID}' type='get' id='roster_1'><query xmlns='jabber:iq:roster'/></iq>"
 		send_data(roster)
 		
+		xml_roster_stopper = "</group></item></query></iq>"
+		
 		puts "Please wait ..."
 		while line = receive_data_once
-			if line.include?("</group></item></query></iq>") || userList.include?("</group></item></query></iq>")
+			if line.include?(xml_roster_stopper) || userList.include?(xml_roster_stopper)
 				userList += line
 				break
 			else
@@ -321,10 +323,8 @@ class Chatting
 		end
 
 		#sometimes the stream of data has more thant the </iq>, so we split it and store the remaining for next steps
-		userXML = userList.split("</group></item></query></iq>")
-		users = userXML[0].insert(userXML[0].size.to_i, "</group></item></query></iq></replies>")
-		users.insert(0, "<replies>")
-		createUserList(users)		
+		userXML = userList.split(xml_roster_stopper)
+		createUserList(userXML[0])		
 		puts "\nFriends list has been retrieved."
 		
 		send_data(set_status("chat"))
@@ -447,6 +447,9 @@ class Chatting
 	end
 	
 	def createUserList(users)
+		users.insert(users.size.to_i, "</group></item></query></iq></replies>")
+		users.insert(0, "<replies>")
+
 		id = 1
 		data, others = REXML::Document.new(users), []
 		data.elements.each("replies/iq/query/*") do |ele|
@@ -457,4 +460,23 @@ class Chatting
 			end
 		end	
 	end
+	
+	#for testing only
+	def countOnlineFriends
+		statuses = ["offline", "unavailable"]
+		counter = 0
+		@@friends.each do |friend|
+			counter += 1 unless statuses.include?(friend.status)
+		end	
+		counter
+	end
+	
+	def getMessages
+		@@messages
+	end
+	
+	def getFriends
+		@@friends
+	end
+
 end
