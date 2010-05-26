@@ -54,12 +54,12 @@ class ChattingTest < Test::Unit::TestCase
 		password = "password"
 		response_value = @chat.construct_response(md5Values, username, password)
 		assert_equal(response_value, "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>dXNlcm5hbWU9InVzZXJuYW1lIixyZWFsbT1jaGF0LmZhY2Vib29rLmNvbSxu
-					b25jZT03MjFBRDQ1MDE5MEFBNDlFNDM1MjcxOTQ0RTRCNjEyOSxjbm9uY2U9
-					IjgyM2U2N2FhMmI0MGM5Mzg0OGIwNzMwNThmYzQ2YWMwIixuYz0wMDAwMDAw
-					MSxxb3A9YXV0aCxkaWdlc3QtdXJpPSJ4bXBwL2NoYXQuZmFjZWJvb2suY29t
-					IixyZXNwb25zZT02NTUyNzJmYTg0ZGViNGFlMmNhZTNhNDk2YjNmZDYzYyxj
-					aGFyc2V0PXV0Zi04
-					</response>")
+b25jZT03MjFBRDQ1MDE5MEFBNDlFNDM1MjcxOTQ0RTRCNjEyOSxjbm9uY2U9
+IjgyM2U2N2FhMmI0MGM5Mzg0OGIwNzMwNThmYzQ2YWMwIixuYz0wMDAwMDAw
+MSxxb3A9YXV0aCxkaWdlc3QtdXJpPSJ4bXBwL2NoYXQuZmFjZWJvb2suY29t
+IixyZXNwb25zZT02NTUyNzJmYTg0ZGViNGFlMmNhZTNhNDk2YjNmZDYzYyxj
+aGFyc2V0PXV0Zi04
+</response>")
 	end
 
 	def test_updateUserStatus
