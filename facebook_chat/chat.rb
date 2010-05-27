@@ -309,14 +309,10 @@ class Chatting
 		roster = "<iq from='#{@@myJID}' type='get' id='roster_1'><query xmlns='jabber:iq:roster'/></iq>"
 		send_data(roster)
 		
-		#xml_roster_stopper = "</group></item></query></iq>"
-		#xml2 = "/></query></iq><presence"
 		stopper = "<presence "
-		#stopeer2 = "<message "
-		# </group></item>
 		puts "Please wait ..."
 		while line = receive_data_once
-			if line.include?(stopper) || userList.include?(stopper) # || line.include?(stopper2) || userList.include?(stopper2)
+			if line.include?(stopper) || userList.include?(stopper) 
 				userList += line
 				break
 			else
@@ -327,16 +323,18 @@ class Chatting
 
 		#sometimes the stream of data has more thant the </iq>, so we split it and store the remaining for next steps
 		userXML = userList.split(stopper)
-		createUserList(userXML[0])		
+		createUserList(userXML[0])	
 		puts "\nFriends list has been retrieved."
 		
 		send_data(set_status("chat"))
 		puts "Status has been set to Online"
 		
-		data_chunk = ""
+		#delete the user list part from the array
+		userXML.delete_at(0)
 		#this is the remaining of the data that received with the userList
-		data_chunk += stopper
-		data_chunk += userXML[1] unless userXML[1].nil?
+		data_chunk = ""		
+		userXML.each { |x| data_chunk = stopper + x }
+		
 		#start a thread that keeps receiving data
 		receiver = Thread.new {
 			while line = receive_data_once
